@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV ITS Matcher & Validator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .upload-section {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #edf2f7, #e2e8f0);
+            transform: translateY(-2px);
+        }
+
+        .upload-section.primary {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #e6fffa, #b2f5ea);
+        }
+
+        .upload-section.reference {
+            border-color: #ed8936;
+            background: linear-gradient(45deg, #fffaf0, #feebc8);
+        }
+
+        .upload-label {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .file-label:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-label.reference {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+        }
+
+        .file-label.reference:hover {
+            box-shadow: 0 15px 30px rgba(237, 137, 54, 0.4);
+        }
+
+        .process-btn {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(72, 187, 120, 0.4);
+        }
+
+        .process-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-card.matches {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.3);
+        }
+
+        .stat-card.matches:hover {
+            box-shadow: 0 20px 40px rgba(72, 187, 120, 0.4);
+        }
+
+        .stat-card.no-matches {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            box-shadow: 0 10px 25px rgba(245, 101, 101, 0.3);
+        }
+
+        .stat-card.no-matches:hover {
+            box-shadow: 0 20px 40px rgba(245, 101, 101, 0.4);
+        }
+
+        .stat-card.reference-only {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            box-shadow: 0 10px 25px rgba(237, 137, 54, 0.3);
+        }
+
+        .stat-card.reference-only:hover {
+            box-shadow: 0 20px 40px rgba(237, 137, 54, 0.4);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .match-analysis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .analysis-card h4 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mini-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .preview {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .preview h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .preview-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .preview-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .preview-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .download-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .download-group {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            width: 100%;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(237, 137, 54, 0.4);
+        }
+
+        .download-btn.matches {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+        }
+
+        .download-btn.matches:hover {
+            box-shadow: 0 15px 30px rgba(72, 187, 120, 0.4);
+        }
+
+        .download-btn.no-matches {
+            background: linear-gradient(45deg, #f56565, #e53e3e);
+        }
+
+        .download-btn.no-matches:hover {
+            box-shadow: 0 15px 30px rgba(245, 101, 101, 0.4);
+        }
+
+        .match-highlight {
+            background-color: #c6f6d5 !important;
+            color: #22543d;
+            font-weight: bold;
+        }
+
+        .no-match-highlight {
+            background-color: #fed7d7 !important;
+            color: #c53030;
+            font-weight: bold;
+        }
+
+        .reference-highlight {
+            background-color: #feebc8 !important;
+            color: #c05621;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .file-status.loaded {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 CSV ITS Matcher & Validator</h1>
+        
+        <div class="upload-grid">
+            <div class="upload-section primary">
+                <div class="file-status" id="primaryStatus"></div>
+                <div class="upload-label">📋 Primary File (Mehman ITS to validate)</div>
+                <input type="file" id="primaryFile" accept=".csv" />
+                <label for="primaryFile" class="file-label">
+                    📁 Choose Primary CSV
+                </label>
+                <p style="margin-top: 15px; color: #718096;">Contains the ITS numbers you want to validate</p>
+            </div>
+
+            <div class="upload-section reference">
+                <div class="file-status" id="referenceStatus"></div>
+                <div class="upload-label">🗃️ Reference File (Master ITS list)</div>
+                <input type="file" id="referenceFile" accept=".csv" />
+                <label for="referenceFile" class="file-label reference">
+                    📁 Choose Reference CSV
+                </label>
+                <p style="margin-top: 15px; color: #718096;">Master list to match against</p>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="process-btn" id="processBtn" onclick="processMatching()" disabled>
+                <span id="processText">🚀 Start Matching Process</span>
+            </button>
+            <button class="process-btn" id="cleanupBtn" onclick="toggleCleanupMode()" disabled style="background: linear-gradient(45deg, #9f7aea, #805ad5);">
+                <span id="cleanupText">🧹 Enable Smart Cleanup</span>
+            </button>
+        </div>
+
+        <div class="stats-grid" id="matchStats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPrimaryRecords">0</div>
+                <div class="stat-label">Primary Records</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalReferenceRecords">0</div>
+                <div class="stat-label">Reference Records</div>
+            </div>
+            <div class="stat-card matches">
+                <div class="stat-number" id="matchedRecords">0</div>
+                <div class="stat-label">✅ Matched</div>
+            </div>
+            <div class="stat-card no-matches">
+                <div class="stat-number" id="unmatchedRecords">0</div>
+                <div class="stat-label">❌ No Match</div>
+            </div>
+            <div class="stat-card reference-only">
+                <div class="stat-number" id="referenceOnlyRecords">0</div>
+                <div class="stat-label">📋 Reference Only</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="matchRate">0%</div>
+                <div class="stat-label">Match Rate</div>
+            </div>
+        </div>
+
+        <div class="match-analysis" id="matchAnalysis" style="display: none;">
+            <div class="analysis-card">
+                <h4>📊 Match Distribution</h4>
+                <div id="matchDistribution"></div>
+            </div>
+            
+            <div class="analysis-card">
+                <h4>🎯 Data Quality Analysis</h4>
+                <div id="qualityAnalysis"></div>
+            </div>
+            
+            <div class="analysis-card">
+                <h4>⚡ Processing Performance</h4>
+                <div id="performanceMetrics"></div>
+            </div>
+            
+            <div class="analysis-card">
+                <h4>🔍 Pattern Analysis</h4>
+                <div id="patternAnalysis"></div>
+            </div>
+        </div>
+
+        <div class="preview" id="preview" style="display: none;">
+            <h3>📊 Match Results Preview</h3>
+            <div id="previewContent"></div>
+        </div>
+
+        <div class="download-section" id="downloadSection" style="display: none;">
+            <div class="download-group">
+                <h4 style="color: #48bb78; margin-bottom: 15px;">✅ Matched Records</h4>
+                <button class="download-btn matches" onclick="downloadMatched()">
+                    📥 Download Matches
+                </button>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">Records found in both files</p>
+            </div>
+            
+            <div class="download-group">
+                <h4 style="color: #f56565; margin-bottom: 15px;">❌ Unmatched Records</h4>
+                <button class="download-btn no-matches" onclick="downloadUnmatched()">
+                    📥 Download No Matches
+                </button>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">Primary records not in reference</p>
+            </div>
+            
+            <div class="download-group">
+                <h4 style="color: #ed8936; margin-bottom: 15px;">📋 Reference Only</h4>
+                <button class="download-btn" onclick="downloadReferenceOnly()">
+                    📥 Download Reference Only
+                </button>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">Reference records not in primary</p>
+            </div>
+            
+            <div class="download-group">
+                <h4 style="color: #667eea; margin-bottom: 15px;">📈 Complete Report</h4>
+                <button class="download-btn" onclick="downloadCompleteReport()" style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                    📊 Download Full Report
+                </button>
+                <p style="margin-top: 10px; font-size: 0.9em; color: #666;">All data with match status</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let primaryData = [];
+        let referenceData = [];
+        let primaryHeaders = [];
+        let referenceHeaders = [];
+        let matchedRecords = [];
+        let unmatchedRecords = [];
+        let referenceOnlyRecords = [];
+        let cleanupMode = false;
+        let processStartTime = 0;
+        let primaryITSIndex = -1;
+        let referenceITSIndex = -1;
+
+        // File upload handlers
+        document.getElementById('primaryFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('primaryStatus').textContent = '✓ Loaded';
+                document.getElementById('primaryStatus').className = 'file-status loaded';
+                document.querySelector('label[for="primaryFile"]').textContent = `📁 ${file.name}`;
+                checkReadyToProcess();
+            }
+        });
+
+        document.getElementById('referenceFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('referenceStatus').textContent = '✓ Loaded';
+                document.getElementById('referenceStatus').className = 'file-status loaded';
+                document.querySelector('label[for="referenceFile"]').textContent = `📁 ${file.name}`;
+                checkReadyToProcess();
+            }
+        });
+
+        function checkReadyToProcess() {
+            const primaryFile = document.getElementById('primaryFile').files[0];
+            const referenceFile = document.getElementById('referenceFile').files[0];
+            
+            if (primaryFile && referenceFile) {
+                document.getElementById('processBtn').disabled = false;
+                document.getElementById('cleanupBtn').disabled = false;
+            }
+        }
+
+        function toggleCleanupMode() {
+            cleanupMode = !cleanupMode;
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            const cleanupText = document.getElementById('cleanupText');
+            
+            if (cleanupMode) {
+                cleanupBtn.style.background = 'linear-gradient(45deg, #48bb78, #38a169)';
+                cleanupText.textContent = '✅ Smart Cleanup ON';
+            } else {
+                cleanupBtn.style.background = 'linear-gradient(45deg, #9f7aea, #805ad5)';
+                cleanupText.textContent = '🧹 Enable Smart Cleanup';
+            }
+        }
+
+        async function processMatching() {
+            const primaryFileInput = document.getElementById('primaryFile');
+            const referenceFileInput = document.getElementById('referenceFile');
+            
+            if (!primaryFileInput.files[0] || !referenceFileInput.files[0]) {
+                alert('Please select both CSV files first!');
+                return;
+            }
+
+            // Show loading state
+            processStartTime = Date.now();
+            document.getElementById('processText').innerHTML = '<span class="loading"></span>Processing...';
+            document.getElementById('processBtn').disabled = true;
+
+            try {
+                // Load and parse both files
+                await loadPrimaryFile(primaryFileInput.files[0]);
+                await loadReferenceFile(referenceFileInput.files[0]);
+                
+                // Perform matching analysis
+                performMatching();
+                
+                // Update all displays
+                updateMatchingStats();
+                showMatchPreview();
+                document.getElementById('downloadSection').style.display = 'grid';
+
+            } catch (error) {
+                alert('Error processing files: ' + error.message);
+            } finally {
+                document.getElementById('processText').textContent = '🚀 Start Matching Process';
+                document.getElementById('processBtn').disabled = false;
+            }
+        }
+
+        async function loadPrimaryFile(file) {
+            const text = await file.text();
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            primaryHeaders = parseCSVLine(lines[0]);
+            primaryData = [];
+            
+            // Find the ITS column
+            primaryITSIndex = primaryHeaders.findIndex(header => 
+                header.toLowerCase().includes('mehmaan its') || 
+                header.toLowerCase().includes('its')
+            );
+            
+            if (primaryITSIndex === -1) {
+                throw new Error('Could not find ITS column in primary file!');
+            }
+
+            // Parse data with optional cleanup
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                const itsNumbers = row[primaryITSIndex];
+                
+                if (cleanupMode && itsNumbers) {
+                    // Expand multiple ITS numbers
+                    const expandedRows = expandITSNumbers(row, primaryITSIndex, itsNumbers);
+                    primaryData.push(...expandedRows);
+                } else {
+                    primaryData.push(row);
+                }
+            }
+        }
+
+        async function loadReferenceFile(file) {
+            const text = await file.text();
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            referenceHeaders = parseCSVLine(lines[0]);
+            referenceData = [];
+            
+            // Find the ITS column in reference file
+            referenceITSIndex = referenceHeaders.findIndex(header => 
+                header.toLowerCase().includes('mehmaan') || 
+                header.toLowerCase().includes('its') ||
+                header.toLowerCase().includes('number')
+            );
+            
+            if (referenceITSIndex === -1) {
+                throw new Error('Could not find ITS/Mehmaan column in reference file!');
+            }
+
+            // Parse reference data
+            for (let i = 1; i < lines.length; i++) {
+                const row = parseCSVLine(lines[i]);
+                if (row[referenceITSIndex] && row[referenceITSIndex].toString().trim()) {
+                    referenceData.push(row);
+                }
+            }
+        }
+
+        function expandITSNumbers(originalRow, itsIndex, itsNumbers) {
+            const cleanedITS = itsNumbers.toString().trim();
+            const separators = /[,\s;|]+/;
+            const numbers = cleanedITS.split(separators)
+                .map(num => num.trim())
+                .filter(num => num.length > 0 && /^\d+$/.test(num));
+            
+            if (numbers.length <= 1) {
+                return [originalRow];
+            }
+            
+            return numbers.map(number => {
+                const newRow = [...originalRow];
+                newRow[itsIndex] = number;
+                return newRow;
+            });
+        }
+
+        function performMatching() {
+            // Create reference lookup set for fast matching
+            const referenceITSSet = new Set();
+            const referenceMap = new Map();
+            
+            referenceData.forEach(row => {
+                const itsNumber = row[referenceITSIndex].toString().trim();
+                if (itsNumber && /^\d{8}$/.test(itsNumber)) {
+                    referenceITSSet.add(itsNumber);
+                    referenceMap.set(itsNumber, row);
+                }
+            });
+
+            // Reset result arrays
+            matchedRecords = [];
+            unmatchedRecords = [];
+            referenceOnlyRecords = [];
+
+            // Check each primary record for matches
+            primaryData.forEach(row => {
+                const itsNumber = row[primaryITSIndex] ? row[primaryITSIndex].toString().trim() : '';
+                
+                if (itsNumber && /^\d{8}$/.test(itsNumber) && referenceITSSet.has(itsNumber)) {
+                    // Create matched record with data from both files
+                    const referenceRow = referenceMap.get(itsNumber);
+                    const combinedRow = [...row, '✅ MATCHED', ...referenceRow];
+                    matchedRecords.push(combinedRow);
+                    referenceITSSet.delete(itsNumber); // Remove from set to track reference-only later
+                } else {
+                    // No match found
+                    const combinedRow = [...row, '❌ NO MATCH'];
+                    unmatchedRecords.push(combinedRow);
+                }
+            });
+
+            // Remaining items in referenceITSSet are reference-only
+            referenceITSSet.forEach(itsNumber => {
+                const referenceRow = referenceMap.get(itsNumber);
+                const combinedRow = ['📋 REFERENCE ONLY', '', '', '', itsNumber, ...referenceRow];
+                referenceOnlyRecords.push(combinedRow);
+            });
+        }
+
+        function updateMatchingStats() {
+            const total = primaryData.length;
+            const matched = matchedRecords.length;
+            const unmatched = unmatchedRecords.length;
+            const referenceOnly = referenceOnlyRecords.length;
+            const matchRate = total > 0 ? Math.round((matched / total) * 100) : 0;
+
+            // Update main stats
+            document.getElementById('totalPrimaryRecords').textContent = total;
+            document.getElementById('totalReferenceRecords').textContent = referenceData.length;
+            document.getElementById('matchedRecords').textContent = matched;
+            document.getElementById('unmatchedRecords').textContent = unmatched;
+            document.getElementById('referenceOnlyRecords').textContent = referenceOnly;
+            document.getElementById('matchRate').textContent = matchRate + '%';
+
+            // Show stats section
+            document.getElementById('matchStats').style.display = 'grid';
+            document.getElementById('matchAnalysis').style.display = 'grid';
+
+            // Update analysis sections
+            updateMatchDistribution();
+            updateQualityAnalysis();
+            updatePerformanceMetrics();
+            updatePatternAnalysis();
+        }
+
+        function updateMatchDistribution() {
+            const total = matchedRecords.length + unmatchedRecords.length;
+            const matchedPercentage = total > 0 ? Math.round((matchedRecords.length / total) * 100) : 0;
+            const unmatchedPercentage = 100 - matchedPercentage;
+
+            const html = `
+                <div class="mini-stat">
+                    <span>Matched</span>
+                    <strong>${matchedRecords.length} (${matchedPercentage}%)</strong>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${matchedPercentage}%; background: linear-gradient(90deg, #48bb78, #38a169);"></div>
+                </div>
+                <div class="mini-stat">
+                    <span>Unmatched</span>
+                    <strong>${unmatchedRecords.length} (${unmatchedPercentage}%)</strong>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${unmatchedPercentage}%; background: linear-gradient(90deg, #f56565, #e53e3e);"></div>
+                </div>
+                <div class="mini-stat">
+                    <span>Reference Only</span>
+                    <strong>${referenceOnlyRecords.length}</strong>
+                </div>
+            `;
+            
+            document.getElementById('matchDistribution').innerHTML = html;
+        }
+
+        function updateQualityAnalysis() {
+            const validPrimaryITS = primaryData.filter(row => 
+                row[primaryITSIndex] && /^\d{8}$/.test(row[primaryITSIndex].toString().trim())
+            ).length;
+            
+            const validReferenceITS = referenceData.filter(row => 
+                row[referenceITSIndex] && /^\d{8}$/.test(row[referenceITSIndex].toString().trim())
+            ).length;
+
+            const primaryQuality = Math.round((validPrimaryITS / primaryData.length) * 100);
+            const referenceQuality = Math.round((validReferenceITS / referenceData.length) * 100);
+
+            const html = `
+                <div class="mini-stat">
+                    <span>Primary Data Quality</span>
+                    <strong>${primaryQuality}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Reference Data Quality</span>
+                    <strong>${referenceQuality}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Valid Primary ITS</span>
+                    <strong>${validPrimaryITS}/${primaryData.length}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Valid Reference ITS</span>
+                    <strong>${validReferenceITS}/${referenceData.length}</strong>
+                </div>
+            `;
+            
+            document.getElementById('qualityAnalysis').innerHTML = html;
+        }
+
+        function updatePerformanceMetrics() {
+            const processingTime = Date.now() - processStartTime;
+            const recordsPerSecond = Math.round(((primaryData.length + referenceData.length) / processingTime) * 1000);
+            const totalOperations = primaryData.length * referenceData.length;
+
+            const html = `
+                <div class="mini-stat">
+                    <span>Processing Time</span>
+                    <strong>${processingTime}ms</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Records/Second</span>
+                    <strong>${recordsPerSecond}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Total Comparisons</span>
+                    <strong>${totalOperations.toLocaleString()}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Cleanup Mode</span>
+                    <strong>${cleanupMode ? '✅ ON' : '❌ OFF'}</strong>
+                </div>
+            `;
+            
+            document.getElementById('performanceMetrics').innerHTML = html;
+        }
+
+        function updatePatternAnalysis() {
+            // Analyze ITS number patterns
+            const matchedITSPatterns = {};
+            const unmatchedITSPatterns = {};
+
+            matchedRecords.forEach(row => {
+                const itsNumber = row[primaryITSIndex];
+                if (itsNumber) {
+                    const firstDigit = itsNumber.toString().charAt(0);
+                    matchedITSPatterns[firstDigit] = (matchedITSPatterns[firstDigit] || 0) + 1;
+                }
+            });
+
+            unmatchedRecords.forEach(row => {
+                const itsNumber = row[primaryITSIndex];
+                if (itsNumber && /^\d+$/.test(itsNumber.toString())) {
+                    const length = itsNumber.toString().length;
+                    unmatchedITSPatterns[`${length} digits`] = (unmatchedITSPatterns[`${length} digits`] || 0) + 1;
+                }
+            });
+
+            const topMatchedPattern = Object.entries(matchedITSPatterns).sort(([,a], [,b]) => b - a)[0];
+            const topUnmatchedPattern = Object.entries(unmatchedITSPatterns).sort(([,a], [,b]) => b - a)[0];
+
+            const html = `
+                <div class="mini-stat">
+                    <span>Top Matched Pattern</span>
+                    <strong>${topMatchedPattern ? `Starts with ${topMatchedPattern[0]} (${topMatchedPattern[1]})` : 'N/A'}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Top Unmatched Pattern</span>
+                    <strong>${topUnmatchedPattern ? `${topUnmatchedPattern[0]} (${topUnmatchedPattern[1]})` : 'N/A'}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Unique Matches</span>
+                    <strong>${new Set(matchedRecords.map(row => row[primaryITSIndex])).size}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Duplicate Matches</span>
+                    <strong>${matchedRecords.length - new Set(matchedRecords.map(row => row[primaryITSIndex])).size}</strong>
+                </div>
+            `;
+            
+            document.getElementById('patternAnalysis').innerHTML = html;
+        }
+
+        function showMatchPreview() {
+            const previewContent = document.getElementById('previewContent');
+            
+            let html = '<h4>✅ Sample Matched Records:</h4>';
+            if (matchedRecords.length > 0) {
+                html += '<table class="preview-table"><thead><tr>';
+                html += '<th>Primary ITS</th><th>Status</th><th>Reference Data</th><th>Zone</th>';
+                html += '</tr></thead><tbody>';
+                
+                matchedRecords.slice(0, 5).forEach(row => {
+                    html += '<tr>';
+                    html += `<td class="match-highlight">${row[primaryITSIndex] || ''}</td>`;
+                    html += `<td class="match-highlight">✅ MATCHED</td>`;
+                    html += `<td>${row[2] || 'N/A'}</td>`;
+                    html += `<td>${row[3] || 'N/A'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            } else {
+                html += '<p style="color: #718096;">No matched records found.</p>';
+            }
+
+            if (unmatchedRecords.length > 0) {
+                html += '<h4 style="margin-top: 30px;">❌ Sample Unmatched Records:</h4>';
+                html += '<table class="preview-table"><thead><tr>';
+                html += '<th>Primary ITS</th><th>Status</th><th>Name</th><th>Zone</th>';
+                html += '</tr></thead><tbody>';
+                
+                unmatchedRecords.slice(0, 5).forEach(row => {
+                    html += '<tr>';
+                    html += `<td class="no-match-highlight">${row[primaryITSIndex] || 'INVALID'}</td>`;
+                    html += `<td class="no-match-highlight">❌ NO MATCH</td>`;
+                    html += `<td>${row[2] || 'N/A'}</td>`;
+                    html += `<td>${row[3] || 'N/A'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+
+            if (referenceOnlyRecords.length > 0) {
+                html += '<h4 style="margin-top: 30px;">📋 Sample Reference-Only Records:</h4>';
+                html += '<table class="preview-table"><thead><tr>';
+                html += '<th>Status</th><th>Reference ITS</th><th>Reference Name</th><th>Reference Info</th>';
+                html += '</tr></thead><tbody>';
+                
+                referenceOnlyRecords.slice(0, 5).forEach(row => {
+                    html += '<tr>';
+                    html += `<td class="reference-highlight">📋 REFERENCE ONLY</td>`;
+                    html += `<td class="reference-highlight">${row[4] || ''}</td>`;
+                    html += `<td>${row[5] || 'N/A'}</td>`;
+                    html += `<td>${row[6] || 'N/A'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+
+            // Add summary statistics table
+            html += '<h4 style="margin-top: 30px;">📊 Matching Summary:</h4>';
+            html += '<table class="preview-table"><thead><tr>';
+            html += '<th>Category</th><th>Count</th><th>Percentage</th><th>Description</th>';
+            html += '</tr></thead><tbody>';
+
+            const total = primaryData.length;
+            const matchPercentage = Math.round((matchedRecords.length / total) * 100);
+            const unmatchPercentage = Math.round((unmatchedRecords.length / total) * 100);
+
+            html += `<tr>
+                <td class="match-highlight">✅ Matched</td>
+                <td><strong>${matchedRecords.length}</strong></td>
+                <td><strong>${matchPercentage}%</strong></td>
+                <td>Found in both files</td>
+            </tr>`;
+            
+            html += `<tr>
+                <td class="no-match-highlight">❌ Unmatched</td>
+                <td><strong>${unmatchedRecords.length}</strong></td>
+                <td><strong>${unmatchPercentage}%</strong></td>
+                <td>Primary only, needs attention</td>
+            </tr>`;
+            
+            html += `<tr>
+                <td class="reference-highlight">📋 Reference Only</td>
+                <td><strong>${referenceOnlyRecords.length}</strong></td>
+                <td><strong>N/A</strong></td>
+                <td>Reference file exclusive</td>
+            </tr>`;
+
+            html += '</tbody></table>';
+
+            previewContent.innerHTML = html;
+            document.getElementById('preview').style.display = 'block';
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function arrayToCSV(data, headers) {
+            return [headers, ...data].map(row => 
+                row.map(field => {
+                    const fieldStr = String(field || '');
+                    return fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n') 
+                        ? `"${fieldStr.replace(/"/g, '""')}"` 
+                        : fieldStr;
+                }).join(',')
+            ).join('\n');
+        }
+
+        function downloadMatched() {
+            const combinedHeaders = [...primaryHeaders, 'Match Status', ...referenceHeaders];
+            const csv = arrayToCSV(matchedRecords, combinedHeaders);
+            downloadCSV(csv, 'matched_records.csv');
+        }
+
+        function downloadUnmatched() {
+            const combinedHeaders = [...primaryHeaders, 'Match Status'];
+            const csv = arrayToCSV(unmatchedRecords, combinedHeaders);
+            downloadCSV(csv, 'unmatched_records.csv');
+        }
+
+        function downloadReferenceOnly() {
+            const combinedHeaders = ['Status', 'Placeholder1', 'Placeholder2', 'Placeholder3', 'ITS Number', ...referenceHeaders];
+            const csv = arrayToCSV(referenceOnlyRecords, combinedHeaders);
+            downloadCSV(csv, 'reference_only_records.csv');
+        }
+
+        function downloadCompleteReport() {
+            // Create comprehensive report with all data
+            const reportHeaders = ['Record Type', 'Primary ITS', 'Match Status', 'Primary Name', 'Primary Zone', 'Reference ITS', 'Reference Name', 'Reference Info'];
+            const reportData = [];
+
+            // Add matched records
+            matchedRecords.forEach(row => {
+                reportData.push([
+                    'PRIMARY_MATCHED',
+                    row[primaryITSIndex] || '',
+                    '✅ MATCHED',
+                    row[2] || '',
+                    row[3] || '',
+                    row[primaryITSIndex] || '',
+                    row[row.length - 2] || '',
+                    row[row.length - 1] || ''
+                ]);
+            });
+
+            // Add unmatched records
+            unmatchedRecords.forEach(row => {
+                reportData.push([
+                    'PRIMARY_UNMATCHED',
+                    row[primaryITSIndex] || '',
+                    '❌ NO MATCH',
+                    row[2] || '',
+                    row[3] || '',
+                    '',
+                    '',
+                    ''
+                ]);
+            });
+
+            // Add reference-only records
+            referenceOnlyRecords.forEach(row => {
+                reportData.push([
+                    'REFERENCE_ONLY',
+                    '',
+                    '📋 REFERENCE ONLY',
+                    '',
+                    '',
+                    row[4] || '',
+                    row[5] || '',
+                    row[6] || ''
+                ]);
+            });
+
+            const csv = arrayToCSV(reportData, reportHeaders);
+            downloadCSV(csv, 'complete_matching_report.csv');
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

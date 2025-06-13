@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Data Cleaner</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #4a5568;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .upload-section {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #f7fafc, #edf2f7);
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            border-color: #667eea;
+            background: linear-gradient(45deg, #edf2f7, #e2e8f0);
+            transform: translateY(-2px);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .file-label:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .process-btn {
+            background: linear-gradient(45deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(72, 187, 120, 0.4);
+        }
+
+        .process-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .zone-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .zone-card {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(72, 187, 120, 0.3);
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .zone-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(72, 187, 120, 0.4);
+        }
+
+        .zone-card.saify {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            box-shadow: 0 8px 20px rgba(229, 62, 62, 0.3);
+        }
+
+        .zone-card.saify:hover {
+            box-shadow: 0 15px 30px rgba(229, 62, 62, 0.4);
+        }
+
+        .zone-card.kalimi {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            box-shadow: 0 8px 20px rgba(237, 137, 54, 0.3);
+        }
+
+        .zone-card.kalimi:hover {
+            box-shadow: 0 15px 30px rgba(237, 137, 54, 0.4);
+        }
+
+        .zone-card.najmi {
+            background: linear-gradient(135deg, #9f7aea, #805ad5);
+            box-shadow: 0 8px 20px rgba(159, 122, 234, 0.3);
+        }
+
+        .zone-card.najmi:hover {
+            box-shadow: 0 15px 30px rgba(159, 122, 234, 0.4);
+        }
+
+        .zone-card.others {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            box-shadow: 0 8px 20px rgba(66, 153, 225, 0.3);
+        }
+
+        .zone-card.others:hover {
+            box-shadow: 0 15px 30px rgba(66, 153, 225, 0.4);
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .insight-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .insight-card h4 {
+            color: white;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .advanced-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .widget {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid #667eea;
+        }
+
+        .widget h4 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+        }
+
+        .mini-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .time-widget {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            color: white;
+        }
+
+        .time-widget h4 {
+            color: white;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preview {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .preview h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .preview-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .preview-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .preview-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .download-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #ed8936, #dd6b20);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(237, 137, 54, 0.4);
+        }
+
+        .invalid-highlight {
+            background-color: #fed7d7 !important;
+            color: #c53030;
+            font-weight: bold;
+        }
+
+        .valid-highlight {
+            background-color: #c6f6d5 !important;
+            color: #22543d;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 ITS Number Data Cleaner</h1>
+        
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept=".csv" />
+            <label for="fileInput" class="file-label">
+                📁 Choose CSV File
+            </label>
+            <p style="margin-top: 20px; color: #718096;">Upload your CSV to validate ITS numbers with 8-digit regex pattern</p>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="process-btn" id="processBtn" onclick="processData()" disabled>
+                <span id="processText">🚀 Process Data</span>
+            </button>
+            <button class="process-btn" id="cleanupBtn" onclick="toggleCleanupMode()" disabled style="background: linear-gradient(45deg, #f56565, #e53e3e);">
+                <span id="cleanupText">🧹 Enable Smart Cleanup</span>
+            </button>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRecords">0</div>
+                <div class="stat-label">Total Records</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="validRecords">0</div>
+                <div class="stat-label">Valid (8-digit)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="invalidRecords">0</div>
+                <div class="stat-label">High Priority</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="validityRate">0%</div>
+                <div class="stat-label">Validity Rate</div>
+            </div>
+            <div class="stat-card" id="expandedCard" style="display: none; background: linear-gradient(135deg, #f56565, #e53e3e);">
+                <div class="stat-number" id="expandedRecords">0</div>
+                <div class="stat-label">🧹 Expanded Records</div>
+            </div>
+        </div>
+
+        <div class="zone-stats" id="zoneStats" style="display: none;">
+            <div class="zone-card saify">
+                <div class="stat-number" id="saifyCount">0</div>
+                <div class="stat-label">🕌 Saify Zone</div>
+            </div>
+            <div class="zone-card kalimi">
+                <div class="stat-number" id="kalimiCount">0</div>
+                <div class="stat-label">⭐ Kalimi Zone</div>
+            </div>
+            <div class="zone-card najmi">
+                <div class="stat-number" id="najmiCount">0</div>
+                <div class="stat-label">🌙 Najmi Zone</div>
+            </div>
+            <div class="zone-card others">
+                <div class="stat-number" id="burhaniCount">0</div>
+                <div class="stat-label">🏛️ Burhani Zone</div>
+            </div>
+        </div>
+
+        <div class="advanced-stats" id="advancedStats" style="display: none;">
+            <div class="widget">
+                <h4>📊 Zone Distribution</h4>
+                <div id="zoneBreakdown"></div>
+            </div>
+            
+            <div class="widget">
+                <h4>⚡ Data Quality Metrics</h4>
+                <div id="qualityMetrics"></div>
+            </div>
+            
+            <div class="widget">
+                <h4>🎯 ITS Number Patterns</h4>
+                <div id="itsPatterns"></div>
+            </div>
+            
+            <div class="widget time-widget">
+                <h4>⏰ Processing Summary</h4>
+                <div id="processingSummary"></div>
+            </div>
+        </div>
+
+        <div class="insights-grid" id="insightsGrid" style="display: none;">
+            <div class="insight-card">
+                <h4>📈 Data Quality Score</h4>
+                <div id="qualityScore"></div>
+            </div>
+            
+            <div class="insight-card">
+                <h4>🎯 Zone Performance</h4>
+                <div id="zonePerformance"></div>
+            </div>
+            
+            <div class="insight-card">
+                <h4>🔍 ITS Number Analysis</h4>
+                <div id="itsAnalysis"></div>
+            </div>
+            
+            <div class="insight-card">
+                <h4>📊 Data Distribution</h4>
+                <div id="dataDistribution"></div>
+            </div>
+        </div>
+
+        <div class="preview" id="preview" style="display: none;">
+            <h3>📊 Data Preview</h3>
+            <div id="previewContent"></div>
+        </div>
+
+        <div class="download-section" id="downloadSection" style="display: none;">
+            <button class="download-btn" onclick="downloadCleanData()">
+                📥 Download Clean Data
+            </button>
+            <button class="download-btn" onclick="downloadHighPriority()">
+                ⚠️ Download High Priority
+            </button>
+            <button class="download-btn" id="downloadExpandedBtn" onclick="downloadExpandedData()" style="display: none; background: linear-gradient(45deg, #9f7aea, #805ad5);">
+                🚀 Download Expanded Data
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let originalData = [];
+        let validData = [];
+        let invalidData = [];
+        let cleanedData = [];
+        let headers = [];
+        let zoneStats = {
+            saify: 0,
+            kalimi: 0,
+            najmi: 0,
+            burhani: 0
+        };
+        let processStartTime = 0;
+        let cleanupMode = false;
+        let expandedRecords = 0;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('processBtn').disabled = false;
+                document.getElementById('cleanupBtn').disabled = false;
+                document.querySelector('.file-label').textContent = `📁 ${file.name}`;
+            }
+        });
+
+        function toggleCleanupMode() {
+            cleanupMode = !cleanupMode;
+            const cleanupBtn = document.getElementById('cleanupBtn');
+            const cleanupText = document.getElementById('cleanupText');
+            
+            if (cleanupMode) {
+                cleanupBtn.style.background = 'linear-gradient(45deg, #48bb78, #38a169)';
+                cleanupText.textContent = '✅ Smart Cleanup ON';
+            } else {
+                cleanupBtn.style.background = 'linear-gradient(45deg, #f56565, #e53e3e)';
+                cleanupText.textContent = '🧹 Enable Smart Cleanup';
+            }
+        }
+
+        async function processData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file first!');
+                return;
+            }
+
+            // Show loading state
+            processStartTime = Date.now();
+            document.getElementById('processText').innerHTML = '<span class="loading"></span>Processing...';
+            document.getElementById('processBtn').disabled = true;
+
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                
+                // Get headers
+                headers = parseCSVLine(lines[0]);
+                
+                // Find the column indices
+                const mehmaanITSIndex = headers.findIndex(header => 
+                    header.toLowerCase().includes('mehmaan its'));
+                const zoneIndex = headers.findIndex(header => 
+                    header.toLowerCase().includes('zone'));
+                
+                if (mehmaanITSIndex === -1) {
+                    alert('Could not find "Mehmaan ITS" column in the CSV!');
+                    return;
+                }
+
+                // Reset stats
+                validData = [];
+                invalidData = [];
+                cleanedData = [];
+                expandedRecords = 0;
+                zoneStats = { saify: 0, kalimi: 0, najmi: 0, burhani: 0 };
+                const regex = /^\d{8}$/; // Strict 8-digit validation
+
+                // Process data with optional cleanup
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim() === '') continue;
+                    
+                    const row = parseCSVLine(lines[i]);
+                    const itsNumbers = row[mehmaanITSIndex];
+                    const zone = (row[zoneIndex] || '').toLowerCase().trim();
+                    
+                    if (cleanupMode && itsNumbers) {
+                        // Smart cleanup: handle comma and space separated ITS numbers
+                        const expandedRows = expandITSNumbers(row, mehmaanITSIndex, itsNumbers);
+                        expandedRows.forEach(expandedRow => {
+                            processRow(expandedRow, mehmaanITSIndex, zoneIndex, regex);
+                        });
+                        
+                        if (expandedRows.length > 1) {
+                            expandedRecords += expandedRows.length - 1; // Don't count the original
+                        }
+                    } else {
+                        // Normal processing
+                        processRow(row, mehmaanITSIndex, zoneIndex, regex);
+                    }
+                }
+
+                // Update all stats
+                updateStats();
+                showPreview(mehmaanITSIndex, zoneIndex);
+                document.getElementById('downloadSection').style.display = 'block';
+
+                // Show expanded records card if applicable
+                if (cleanupMode && expandedRecords > 0) {
+                    document.getElementById('expandedCard').style.display = 'block';
+                    document.getElementById('expandedRecords').textContent = expandedRecords;
+                    document.getElementById('downloadExpandedBtn').style.display = 'inline-block';
+                }
+
+            } catch (error) {
+                alert('Error processing file: ' + error.message);
+            } finally {
+                document.getElementById('processText').textContent = '🚀 Process Data';
+                document.getElementById('processBtn').disabled = false;
+            }
+        }
+
+        function expandITSNumbers(originalRow, itsIndex, itsNumbers) {
+            // Clean and split the ITS numbers by comma, space, or both
+            const cleanedITS = itsNumbers.toString().trim();
+            
+            // Handle various separators: comma, space, semicolon, pipe
+            const separators = /[,\s;|]+/;
+            const numbers = cleanedITS.split(separators)
+                .map(num => num.trim())
+                .filter(num => num.length > 0 && /^\d+$/.test(num)); // Only accept numeric values
+            
+            // If only one number found, return original row
+            if (numbers.length <= 1) {
+                return [originalRow];
+            }
+            
+            // Create new rows for each ITS number
+            const expandedRows = [];
+            numbers.forEach(number => {
+                const newRow = [...originalRow]; // Copy the original row
+                newRow[itsIndex] = number; // Replace with individual ITS number
+                expandedRows.push(newRow);
+                cleanedData.push(newRow); // Track all cleaned data
+            });
+            
+            return expandedRows;
+        }
+
+        function processRow(row, mehmaanITSIndex, zoneIndex, regex) {
+            const itsNumber = row[mehmaanITSIndex];
+            const zone = (row[zoneIndex] || '').toLowerCase().trim();
+            
+            // Count zones - updated logic
+            if (zone.includes('saify')) {
+                zoneStats.saify++;
+            } else if (zone.includes('kalimi')) {
+                zoneStats.kalimi++;
+            } else if (zone.includes('najmi')) {
+                zoneStats.najmi++;
+            } else {
+                zoneStats.burhani++; // Everything else goes to Burhani
+            }
+            
+            // Strict validation: exactly 8 digits, no more, no less
+            if (itsNumber && regex.test(itsNumber.toString().trim())) {
+                validData.push(row);
+            } else {
+                invalidData.push(row);
+            }
+        }
+
+        // FIXED: Add the missing updateStats function
+        function updateStats() {
+            const total = validData.length + invalidData.length;
+            const validityRate = total > 0 ? Math.round((validData.length / total) * 100) : 0;
+            
+            // Main stats
+            document.getElementById('totalRecords').textContent = total;
+            document.getElementById('validRecords').textContent = validData.length;
+            document.getElementById('invalidRecords').textContent = invalidData.length;
+            document.getElementById('validityRate').textContent = validityRate + '%';
+            
+            // Zone stats
+            document.getElementById('saifyCount').textContent = zoneStats.saify;
+            document.getElementById('kalimiCount').textContent = zoneStats.kalimi;
+            document.getElementById('najmiCount').textContent = zoneStats.najmi;
+            document.getElementById('burhaniCount').textContent = zoneStats.burhani;
+            
+            // Show all stat sections
+            document.getElementById('stats').style.display = 'grid';
+            document.getElementById('zoneStats').style.display = 'grid';
+            document.getElementById('advancedStats').style.display = 'grid';
+            
+            // Update advanced widgets
+            updateZoneBreakdown();
+            updateQualityMetrics();
+            updateITSPatterns();
+            updateProcessingSummary();
+            updateDataInsights();
+        }
+
+        function updateZoneBreakdown() {
+            const total = Object.values(zoneStats).reduce((a, b) => a + b, 0);
+            let html = '';
+            
+            Object.entries(zoneStats).forEach(([zone, count]) => {
+                const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                const zoneLabel = zone.charAt(0).toUpperCase() + zone.slice(1);
+                
+                html += `
+                    <div class="mini-stat">
+                        <span>${zoneLabel}</span>
+                        <strong>${count} (${percentage}%)</strong>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('zoneBreakdown').innerHTML = html;
+        }
+
+        function updateQualityMetrics() {
+            const total = validData.length + invalidData.length;
+            const emptyITS = invalidData.filter(row => !row[4] || row[4].toString().trim() === '').length;
+            const malformedITS = invalidData.length - emptyITS;
+            
+            let html = `
+                <div class="mini-stat">
+                    <span>Data Completeness</span>
+                    <strong>${Math.round(((total - emptyITS) / total) * 100)}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Format Compliance</span>
+                    <strong>${Math.round((validData.length / total) * 100)}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Empty ITS Numbers</span>
+                    <strong>${emptyITS}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Malformed ITS</span>
+                    <strong>${malformedITS}</strong>
+                </div>
+            `;
+            
+            if (cleanupMode && expandedRecords > 0) {
+                html += `
+                    <div class="mini-stat" style="background: #fed7d7;">
+                        <span>🧹 Records Expanded</span>
+                        <strong>${expandedRecords}</strong>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('qualityMetrics').innerHTML = html;
+        }
+
+        function updateITSPatterns() {
+            // Analyze ITS number patterns
+            const patterns = {};
+            validData.forEach(row => {
+                const itsNumber = row[4].toString();
+                const firstDigit = itsNumber.charAt(0);
+                patterns[firstDigit] = (patterns[firstDigit] || 0) + 1;
+            });
+            
+            let html = '<div style="margin-bottom: 10px;"><strong>Valid ITS Starting Digits:</strong></div>';
+            Object.entries(patterns)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .forEach(([digit, count]) => {
+                    html += `
+                        <div class="mini-stat">
+                            <span>Starts with ${digit}</span>
+                            <strong>${count}</strong>
+                        </div>
+                    `;
+                });
+            
+            document.getElementById('itsPatterns').innerHTML = html;
+        }
+
+        function updateProcessingSummary() {
+            const processingTime = Date.now() - processStartTime;
+            const recordsPerSecond = Math.round(((validData.length + invalidData.length) / processingTime) * 1000);
+            
+            const html = `
+                <div class="mini-stat">
+                    <span>Processing Time</span>
+                    <strong>${processingTime}ms</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Records/Second</span>
+                    <strong>${recordsPerSecond}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Timestamp</span>
+                    <strong>${new Date().toLocaleTimeString()}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Status</span>
+                    <strong style="color: #48bb78;">✅ Complete</strong>
+                </div>
+            `;
+            
+            document.getElementById('processingSummary').innerHTML = html;
+        }
+
+        function updateDataInsights() {
+            // Show insights section
+            document.getElementById('insightsGrid').style.display = 'grid';
+            
+            updateQualityScore();
+            updateZonePerformance();
+            updateITSAnalysis();
+            updateDataDistribution();
+        }
+
+        function updateQualityScore() {
+            const total = validData.length + invalidData.length;
+            const validityRate = total > 0 ? Math.round((validData.length / total) * 100) : 0;
+            const completenessRate = total > 0 ? Math.round(((total - invalidData.filter(row => !row[4] || row[4].toString().trim() === '').length) / total) * 100) : 0;
+            const overallScore = Math.round((validityRate + completenessRate) / 2);
+            
+            let scoreColor = '#e53e3e';
+            let scoreEmoji = '❌';
+            if (overallScore >= 80) {
+                scoreColor = '#48bb78';
+                scoreEmoji = '🎉';
+            } else if (overallScore >= 60) {
+                scoreColor = '#ed8936';
+                scoreEmoji = '⚠️';
+            }
+            
+            const html = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 3em; color: ${scoreColor};">${overallScore}%</div>
+                    <div style="font-size: 1.5em;">${scoreEmoji} Overall Quality</div>
+                </div>
+                <div class="mini-stat">
+                    <span>Validity Rate</span>
+                    <strong>${validityRate}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Completeness</span>
+                    <strong>${completenessRate}%</strong>
+                </div>
+            `;
+            
+            document.getElementById('qualityScore').innerHTML = html;
+        }
+
+        function updateZonePerformance() {
+            const total = Object.values(zoneStats).reduce((a, b) => a + b, 0);
+            let bestZone = 'N/A';
+            let bestRate = 0;
+            
+            // Calculate success rate per zone
+            const zonePerformanceData = {};
+            Object.entries(zoneStats).forEach(([zone, count]) => {
+                const zoneValidCount = validData.filter(row => {
+                    const rowZone = (row[3] || '').toLowerCase().trim();
+                    if (zone === 'burhani') return !rowZone.includes('saify') && !rowZone.includes('kalimi') && !rowZone.includes('najmi');
+                    return rowZone.includes(zone);
+                }).length;
+                
+                const successRate = count > 0 ? Math.round((zoneValidCount / count) * 100) : 0;
+                zonePerformanceData[zone] = { count, valid: zoneValidCount, rate: successRate };
+                
+                if (successRate > bestRate) {
+                    bestRate = successRate;
+                    bestZone = zone.charAt(0).toUpperCase() + zone.slice(1);
+                }
+            });
+            
+            let html = `
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <strong>🏆 Best: ${bestZone} (${bestRate}%)</strong>
+                </div>
+            `;
+            
+            Object.entries(zonePerformanceData).forEach(([zone, data]) => {
+                const zoneName = zone.charAt(0).toUpperCase() + zone.slice(1);
+                html += `
+                    <div class="mini-stat">
+                        <span>${zoneName}</span>
+                        <strong>${data.rate}% (${data.valid}/${data.count})</strong>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('zonePerformance').innerHTML = html;
+        }
+
+        function updateITSAnalysis() {
+            // Analyze ITS patterns more deeply
+            const validITSNumbers = validData.map(row => row[4].toString());
+            const invalidITSNumbers = invalidData.map(row => row[4] ? row[4].toString() : '').filter(its => its);
+            
+            // Find common invalid patterns
+            const invalidPatterns = {};
+            invalidITSNumbers.forEach(its => {
+                const length = its.length;
+                invalidPatterns[`${length} digits`] = (invalidPatterns[`${length} digits`] || 0) + 1;
+            });
+            
+            // Most common starting digits for valid ITS
+            const startingDigits = {};
+            validITSNumbers.forEach(its => {
+                const firstDigit = its.charAt(0);
+                startingDigits[firstDigit] = (startingDigits[firstDigit] || 0) + 1;
+            });
+            
+            const mostCommonStart = Object.entries(startingDigits).sort(([,a], [,b]) => b - a)[0];
+            
+            let html = `
+                <div class="mini-stat">
+                    <span>Valid 8-digit ITS</span>
+                    <strong>${validITSNumbers.length}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Most Common Start</span>
+                    <strong>${mostCommonStart ? mostCommonStart[0] + ' (' + mostCommonStart[1] + ')' : 'N/A'}</strong>
+                </div>
+            `;
+            
+            // Show top invalid patterns
+            const topInvalidPattern = Object.entries(invalidPatterns).sort(([,a], [,b]) => b - a)[0];
+            if (topInvalidPattern) {
+                html += `
+                    <div class="mini-stat">
+                        <span>Common Invalid</span>
+                        <strong>${topInvalidPattern[0]} (${topInvalidPattern[1]})</strong>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('itsAnalysis').innerHTML = html;
+        }
+
+        function updateDataDistribution() {
+            const total = validData.length + invalidData.length;
+            const timestamp = new Date();
+            const hourlyStat = Math.round(total / 24); // Assume 24-hour collection period
+            
+            const html = `
+                <div class="mini-stat">
+                    <span>Total Processed</span>
+                    <strong>${total.toLocaleString()}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Success Rate</span>
+                    <strong>${Math.round((validData.length / total) * 100)}%</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Records/Hour (Est)</span>
+                    <strong>${hourlyStat}</strong>
+                </div>
+                <div class="mini-stat">
+                    <span>Processed At</span>
+                    <strong>${timestamp.toLocaleDateString()}</strong>
+                </div>
+            `;
+            
+            document.getElementById('dataDistribution').innerHTML = html;
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function showPreview(mehmaanITSIndex, zoneIndex) {
+            const previewContent = document.getElementById('previewContent');
+            
+            let html = '<h4>📋 Sample Valid Records (8-digit ITS numbers):</h4>';
+            html += '<table class="preview-table"><thead><tr>';
+            
+            // Show relevant headers
+            const relevantHeaders = ['Timestamp', 'RATLAM HOF Name', 'Zone', 'Mehmaan ITS (With Raza)'];
+            relevantHeaders.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            // Show first 5 valid records
+            validData.slice(0, 5).forEach(row => {
+                html += '<tr>';
+                html += `<td>${row[0] || ''}</td>`;
+                html += `<td>${row[2] || ''}</td>`;
+                html += `<td>${row[zoneIndex] || 'N/A'}</td>`;
+                html += `<td class="valid-highlight">${row[mehmaanITSIndex] || ''}</td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            if (invalidData.length > 0) {
+                html += '<h4 style="margin-top: 30px;">⚠️ Sample High Priority Records (Invalid ITS numbers):</h4>';
+                html += '<table class="preview-table"><thead><tr>';
+                
+                relevantHeaders.forEach(header => {
+                    html += `<th>${header}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                // Show first 5 invalid records
+                invalidData.slice(0, 5).forEach(row => {
+                    html += '<tr>';
+                    html += `<td>${row[0] || ''}</td>`;
+                    html += `<td>${row[2] || ''}</td>`;
+                    html += `<td>${row[zoneIndex] || 'N/A'}</td>`;
+                    html += `<td class="invalid-highlight">${row[mehmaanITSIndex] || 'INVALID/EMPTY'}</td>`;
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            }
+
+            // Add zone-wise breakdown table
+            html += '<h4 style="margin-top: 30px;">🗺️ Zone-wise Summary:</h4>';
+            html += '<table class="preview-table"><thead><tr>';
+            html += '<th>Zone</th><th>Total Records</th><th>Valid ITS</th><th>Invalid ITS</th><th>Success Rate</th>';
+            html += '</tr></thead><tbody>';
+            
+            // Calculate zone-wise stats
+            const zoneBreakdown = {};
+            [...validData, ...invalidData].forEach(row => {
+                const zone = (row[zoneIndex] || 'Others').trim() || 'Others';
+                const itsNumber = row[mehmaanITSIndex];
+                const isValid = itsNumber && /^\d{8}$/.test(itsNumber.toString().trim());
+                
+                if (!zoneBreakdown[zone]) {
+                    zoneBreakdown[zone] = { total: 0, valid: 0, invalid: 0 };
+                }
+                
+                zoneBreakdown[zone].total++;
+                if (isValid) {
+                    zoneBreakdown[zone].valid++;
+                } else {
+                    zoneBreakdown[zone].invalid++;
+                }
+            });
+            
+            Object.entries(zoneBreakdown)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .forEach(([zone, stats]) => {
+                    const successRate = Math.round((stats.valid / stats.total) * 100);
+                    html += `<tr>
+                        <td><strong>${zone}</strong></td>
+                        <td>${stats.total}</td>
+                        <td class="valid-highlight">${stats.valid}</td>
+                        <td class="invalid-highlight">${stats.invalid}</td>
+                        <td><strong>${successRate}%</strong></td>
+                    </tr>`;
+                });
+            
+            if (cleanupMode && expandedRecords > 0) {
+                html += '<h4 style="margin-top: 30px;">🚀 Sample Expanded Records (After Smart Cleanup):</h4>';
+                html += '<table class="preview-table"><thead><tr>';
+                html += '<th>Original Entry</th><th>Expanded ITS</th><th>Zone</th><th>Status</th>';
+                html += '</tr></thead><tbody>';
+                
+                // Show some expanded records
+                cleanedData.slice(0, 5).forEach(row => {
+                    const itsNumber = row[mehmaanITSIndex];
+                    const isValid = /^\d{8}$/.test(itsNumber.toString().trim());
+                    html += `<tr>
+                        <td>Multiple ITS Numbers</td>
+                        <td class="${isValid ? 'valid-highlight' : 'invalid-highlight'}">${itsNumber}</td>
+                        <td>${row[zoneIndex] || 'N/A'}</td>
+                        <td>${isValid ? '✅ Valid' : '❌ Invalid'}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+            }
+
+            previewContent.innerHTML = html;
+            document.getElementById('preview').style.display = 'block';
+        }
+
+        function arrayToCSV(data) {
+            return [headers, ...data].map(row => 
+                row.map(field => {
+                    const fieldStr = String(field || '');
+                    return fieldStr.includes(',') || fieldStr.includes('"') || fieldStr.includes('\n') 
+                        ? `"${fieldStr.replace(/"/g, '""')}"` 
+                        : fieldStr;
+                }).join(',')
+            ).join('\n');
+        }
+
+        function downloadCleanData() {
+            const csv = arrayToCSV(validData);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'clean_data.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function downloadHighPriority() {
+            const csv = arrayToCSV(invalidData);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'high_priority.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function downloadExpandedData() {
+            const csv = arrayToCSV(cleanedData);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'expanded_clean_data.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
